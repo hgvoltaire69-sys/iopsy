@@ -45,7 +45,7 @@ body::after{
 main{max-width:640px;margin:0 auto;padding:20px 16px 80px;position:relative;z-index:1}
 
 /* === MEI MEI AVATAR === */
-.mei-header{text-align:center;padding:10px 0 0}
+.mei-header{text-align:center;padding:10px 0 0;margin-bottom:22px}
 .mei-img{
   width:120px;height:120px;border-radius:50%;
   object-fit:cover;object-position:center 30%;
@@ -105,15 +105,15 @@ button{font:inherit;color:inherit;cursor:pointer}
 .btn{
   display:block;width:100%;text-align:left;
   background:var(--card);border:1.5px solid var(--bd);border-radius:18px;
-  padding:16px 18px;margin:10px 0;
+  padding:16px 70px 16px 18px;margin:10px 0;
   transition:all .2s ease;position:relative;overflow:hidden;
   box-shadow:0 2px 8px rgba(212,160,90,.06);
 }
 .btn:hover{border-color:var(--ac);transform:translateY(-2px);box-shadow:0 6px 20px rgba(232,145,79,.15)}
 .btn:active{transform:scale(.98)}
 .btn b{display:block;font-weight:700;font-size:1.02rem}
-.btn span{color:var(--mu);font-size:.88rem}
-.btn-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:center 30%;border:2px solid var(--bd);opacity:.8}
+.btn span{display:block;color:var(--mu);font-size:.88rem;line-height:1.35;margin-top:2px}
+.btn-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:center 30%;border:2px solid var(--bd);opacity:.85;pointer-events:none}
 
 .pri{
   background:linear-gradient(135deg,var(--ac),#d47a3a);
@@ -191,8 +191,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .fc:active{transform:scale(.97)}
 
 .tag{
-  font-size:.78rem;color:var(--mu);text-transform:uppercase;
+  display:inline-block;
+  font-size:.8rem;color:var(--mu);text-transform:uppercase;
   letter-spacing:.08em;font-weight:700;
+  margin:10px 0 6px;
 }
 
 /* Results */
@@ -353,21 +355,42 @@ body, button, .chip, .opt, .btn, .card, .fc, .mei-gallery img, .egg-overlay {
 @media(min-width:768px){
   main{max-width:720px;padding:32px 24px calc(90px + env(safe-area-inset-bottom, 0px))}
   .mei-img{width:145px;height:145px}
-  .mei-speech{max-width:440px;font-size:1.02rem}
-  .btn{padding:20px 22px;border-radius:20px}
-  .btn b{font-size:1.1rem}
+  .btn{padding:20px 80px 20px 22px;border-radius:20px}
+  .btn-icon{width:50px;height:50px;right:18px}
   .opt{padding:16px 20px;font-size:1.05rem}
+  .mei-header{margin-bottom:28px}
+  .tag{font-size:.86rem;margin:12px 0 8px}
   .chips{gap:12px}
   .chip{padding:10px 20px;font-size:1rem}
+  .runner-toggle{padding:8px 18px;font-size:.85rem;right:20px;bottom:20px}
 }
+
+.mei-runner.hidden{display:none !important}
+.runner-toggle{
+  position:fixed;bottom:max(12px,calc(env(safe-area-inset-bottom,0px) + 8px));
+  right:14px;z-index:110;
+  background:var(--card);border:1.5px solid var(--bd);border-radius:99px;
+  padding:6px 14px;font-size:.78rem;font-weight:700;color:var(--mu);
+  cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.1);
+  display:inline-flex;align-items:center;gap:6px;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  transition:all .2s ease;
+}
+.runner-toggle:hover{border-color:var(--ac);color:var(--tx);transform:scale(1.05)}
+.runner-toggle:active{transform:scale(.95)}
 </style>
 </head>
 <body>
 
 <!-- Mei Mei running across bottom -->
-<div class="mei-runner">
+<div class="mei-runner" id="meiRunner">
   <img src="images/tole-tole-cat-cat.gif" alt="Mei Mei running">
 </div>
+
+<!-- Floating bottom runner toggle -->
+<button id="runnerToggle" class="runner-toggle" onclick="toggleRunner()" aria-label="Toggle bottom cat runner">
+  <span id="runnerIcon">🐈</span> <span id="runnerLabel">Cat: ON</span>
+</button>
 
 <main id="app"></main>
 <script src="questions.js"></script>
@@ -501,18 +524,50 @@ function home(){
   </div>
   <div class="chips">${['all',3,4,5].map(s=>`<button class="chip ${scope==s?'on':''}" onclick="scope='${s}';home()">${s=='all'?'🐾 All lessons':'📖 Lesson '+s}</button>`).join('')}</div>
   <p class="mu" style="text-align:center">${n} questions in this selection</p>
-  <button class="btn btn-bounce" onclick="go(()=>startQuiz('practice'))"><b>🎯 Practice Mode</b><span>Instant feedback · Mei Mei reacts to every answer!</span><img class="btn-icon" src="${MEI.practice}" alt=""></button>
+  <button class="btn btn-bounce" onclick="go(practiceSetup)"><b>🎯 Practice Mode</b><span>Instant feedback & Mei Mei reactions!</span><img class="btn-icon" src="${MEI.practice}" alt=""></button>
   <button class="btn btn-bounce" onclick="go(flash)"><b>🃏 Flash Cards</b><span>Tap to flip · question on front, answer on back</span><img class="btn-icon" src="${MEI.flash}" alt=""></button>
   <button class="btn btn-bounce" onclick="go(examSetup)"><b>⏱️ Exam Mode</b><span>Timed, no hints, graded at the end</span><img class="btn-icon" src="${MEI.exam}" alt=""></button>
   <button class="btn btn-bounce" onclick="go(()=>review('all'))"><b>📋 Review Section</b><span>See your last attempt${missed?` · ${missed} missed`:''}</span><img class="btn-icon" src="${MEI.review}" alt=""></button>`;
 }
 
+function practiceSetup(){
+  const n=pool().length;
+  const opts=[5,10,20,30,n].filter((v,i,a)=>v<=n&&a.indexOf(v)===i);
+  app.innerHTML=`
+  <button class="back" onclick="home()">← Back</button>
+  ${meiHeader(MEI.practice,'How many questions would you like to practice? 🐾')}
+  <h2>🎯 Practice Mode</h2>
+  <p class="mu">Choose a set size or enter a custom amount (${n} available in this selection). Instant feedback and explanations after each answer!</p>
+  <div style="display:flex;gap:10px;align-items:center;margin:16px 0">
+    <input type="number" id="pCustom" min="1" max="${n}" value="${Math.min(10,n)}" 
+      style="width:84px;padding:12px;border-radius:14px;border:2px solid var(--bd);background:var(--card);color:var(--tx);font:inherit;font-weight:700;text-align:center" />
+    <button class="btn pri" style="margin:0;flex:1" onclick="const v=parseInt(document.getElementById('pCustom').value)||10;startQuiz('practice',Math.min(n,Math.max(1,v)))">Start custom drill →</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:10px">
+    ${opts.map(c=>`
+      <button class="btn btn-bounce" style="text-align:center;padding:14px 10px;margin:0" onclick="startQuiz('practice',${c})">
+        <b style="font-size:1.15rem">${c===n?'🐾 All '+n:c}</b>
+        <span style="font-size:.82rem">${c===n?'Full selection':c+' questions'}</span>
+      </button>
+    `).join('')}
+  </div>`;
+}
+
 function examSetup(){
-  const n=pool().length,opts=[10,20,n].filter((v,i,a)=>v<=n&&a.indexOf(v)===i);
-  app.innerHTML=`${meiHeader(MEI.examSetup,'Stay focused! You\'ve got this~ 🧐')}
-  <button class="back" onclick="home()">← Back</button><h2>⏱️ Exam Mode</h2>
-  <p class="mu">Choose how many questions. You get 1 minute per question.</p>
-  ${opts.map(c=>`<button class="btn pri btn-bounce" onclick="startQuiz('exam',${c})">${c===n?'All '+n:c} questions</button>`).join('')}`;
+  const n=pool().length,opts=[10,20,30,n].filter((v,i,a)=>v<=n&&a.indexOf(v)===i);
+  app.innerHTML=`
+  <button class="back" onclick="home()">← Back</button>
+  ${meiHeader(MEI.examSetup,'Stay focused! You\'ve got this~ 🧐')}
+  <h2>⏱️ Exam Mode</h2>
+  <p class="mu">Choose how many questions. You get 1 minute per question and results are graded at the end (${n} available).</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px">
+    ${opts.map(c=>`
+      <button class="btn pri btn-bounce" style="margin:0;padding:16px 12px" onclick="startQuiz('exam',${c})">
+        <b style="font-size:1.15rem">${c===n?'🐾 All '+n:c}</b>
+        <span style="font-size:.82rem">${c===n?'Full exam':c+' questions'}</span>
+      </button>
+    `).join('')}
+  </div>`;
 }
 
 function startQuiz(mode,count){
@@ -611,7 +666,35 @@ function card(){
   <div class="row"><button class="btn" style="text-align:center" ${i?'':'disabled'} onclick="S.i--;S.flip=false;card()">← Previous</button>
   <button class="btn pri" onclick="${i<deck.length-1?'S.i++;S.flip=false;card()':'S.deck=sh(S.deck);S.i=0;S.flip=false;card()'}">${i<deck.length-1?'Next →':'🔀 Shuffle & restart'}</button></div>`;
 }
+function initRunner(){
+  const isHidden=ls.get('hide_runner',false);
+  const runner=document.getElementById('meiRunner');
+  const toggle=document.getElementById('runnerToggle');
+  const icon=document.getElementById('runnerIcon');
+  const label=document.getElementById('runnerLabel');
+  if(runner&&toggle){
+    if(isHidden){
+      runner.classList.add('hidden');
+      if(icon)icon.textContent='💤';
+      if(label)label.textContent='Cat: OFF';
+      toggle.style.opacity='0.65';
+    }else{
+      runner.classList.remove('hidden');
+      if(icon)icon.textContent='🐈';
+      if(label)label.textContent='Cat: ON';
+      toggle.style.opacity='1';
+    }
+  }
+}
+
+function toggleRunner(){
+  const isCurrentlyHidden=ls.get('hide_runner',false);
+  ls.set('hide_runner',!isCurrentlyHidden);
+  initRunner();
+}
+
 home();
+initRunner();
 </script>
 </body>
 </html>
