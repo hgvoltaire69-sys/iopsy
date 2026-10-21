@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OB Practice Exam · Lessons 3 to 5</title>
+<style>
+:root{--bg:#f6f3ee;--card:#fffdf9;--tx:#2b2a28;--mu:#7a756d;--ac:#4f7a91;--acs:#e3edf2;--ok:#4f8a66;--oks:#e1efe6;--no:#b86a5d;--nos:#f6e4e0;--bd:#e5dfd5}
+@media(prefers-color-scheme:dark){:root{--bg:#1b1e22;--card:#252930;--tx:#e8e5df;--mu:#9a968e;--ac:#8fb5c9;--acs:#2b3a44;--ok:#7cc096;--oks:#243a2e;--no:#e09a8d;--nos:#402a27;--bd:#343941}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.5rem;margin:8px 0 4px}h2{font-size:1.2rem;margin:0 0 12px}
+.mu{color:var(--mu);font-size:.92rem}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px;margin:12px 0}
+button{font:inherit;color:inherit;cursor:pointer}
+.btn{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px 16px;margin:10px 0;transition:.15s}
+.btn:hover{border-color:var(--ac)}.btn b{display:block}.btn span{color:var(--mu);font-size:.9rem}
+.pri{background:var(--ac);color:#fff;text-align:center;border-color:var(--ac);font-weight:600}
+@media(prefers-color-scheme:dark){.pri{color:#13181b}}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.chip{border:1px solid var(--bd);background:var(--card);border-radius:99px;padding:6px 14px;font-size:.9rem}
+.chip.on{background:var(--acs);border-color:var(--ac);color:var(--ac)}
+.bar{height:6px;background:var(--bd);border-radius:9px;overflow:hidden;margin:10px 0 16px}.bar i{display:block;height:100%;background:var(--ac);transition:.3s}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.back{background:none;border:0;color:var(--ac);padding:6px 0;font-size:.95rem}
+.opt{display:block;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--bd);border-radius:12px;padding:12px 14px;margin:9px 0}
+.opt.sel{border-color:var(--ac);background:var(--acs)}
+.opt.ok{border-color:var(--ok);background:var(--oks)}.opt.no{border-color:var(--no);background:var(--nos)}
+.exp{background:var(--acs);border-radius:12px;padding:12px 14px;margin:12px 0;font-size:.95rem}
+.fc{min-height:220px;display:flex;flex-direction:column;justify-content:center;text-align:center;cursor:pointer;font-size:1.1rem}
+.tag{font-size:.78rem;color:var(--mu);text-transform:uppercase;letter-spacing:.06em}
+.big{font-size:2.6rem;font-weight:700;margin:4px 0}
+.good{color:var(--ok)}.bad{color:var(--no)}
+button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script src="questions.js"></script>
+<script>
+const app=document.getElementById('app');
+const LN={3:'Lesson 3 · Individual Behavior',4:'Lesson 4 · Motivation',5:'Lesson 5 · Groups & Teams'};
+const ls={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+const sh=a=>{a=[...a];for(let i=a.length;i>1;){const j=Math.random()*i--|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+// shuffle answer order so the correct option isn't always in the same spot
+const prep=l=>sh(l).map(x=>{const s=sh(x.o.map((t,i)=>({t,c:i===x.a})));return{...x,o:s.map(z=>z.t),a:s.findIndex(z=>z.c)}});
+let scope='all',S={},timer=null;
+const pool=()=>Q.filter(x=>scope==='all'||x.l==scope);
+const L='ABCD';
+const go=f=>{clearInterval(timer);f()};
+
+function home(){
+  const n=pool().length;
+  const missed=ls.get('missed',[]).length;
+  app.innerHTML=`<h1>OB Practice Exam</h1><p class="mu">Lessons 3 to 5 · ${Q.length} questions</p>
+  <div class="chips">${['all',3,4,5].map(s=>`<button class="chip ${scope==s?'on':''}" onclick="scope='${s}';home()">${s=='all'?'All lessons':'Lesson '+s}</button>`).join('')}</div>
+  <p class="mu">${n} questions in this selection</p>
+  <button class="btn" onclick="go(()=>startQuiz('practice'))"><b>Practice Mode</b><span>Instant feedback and explanation after each answer</span></button>
+  <button class="btn" onclick="go(flash)"><b>Flash Cards</b><span>Tap to flip · question on front, answer on back</span></button>
+  <button class="btn" onclick="go(examSetup)"><b>Exam Mode</b><span>Timed, no hints, graded at the end</span></button>
+  <button class="btn" onclick="go(()=>review('all'))"><b>Review Section</b><span>See your last attempt${missed?` · ${missed} missed question${missed>1?'s':''} saved`:''}</span></button>`;
+}
+
+function examSetup(){
+  const n=pool().length,opts=[10,20,n].filter((v,i,a)=>v<=n&&a.indexOf(v)===i);
+  app.innerHTML=`<button class="back" onclick="home()">← Back</button><h2>Exam Mode</h2>
+  <p class="mu">Choose how many questions. You get 1 minute per question and see answers only after you submit.</p>
+  ${opts.map(c=>`<button class="btn pri" onclick="startQuiz('exam',${c})">${c===n?'All '+n:c} questions</button>`).join('')}`;
+}
+
+function startQuiz(mode,count){
+  const qs=prep(pool()).slice(0,count||99);
+  S={mode,qs,i:0,a:Array(qs.length).fill(null),left:qs.length*60};
+  if(mode==='retry'){}
+  if(mode==='exam')timer=setInterval(()=>{S.left--;const t=document.getElementById('tm');if(t)t.textContent=fmt(S.left);if(S.left<=0)finish()},1000);
+  quiz();
+}
+const fmt=s=>`${s/60|0}:${String(s%60).padStart(2,'0')}`;
+
+function quiz(){
+  const {mode,qs,i,a}=S,q=qs[i],ex=mode==='exam',locked=!ex&&a[i]!==null,last=i===qs.length-1;
+  app.innerHTML=`<div class="top"><button class="back" onclick="if(confirm('Leave this session?'))go(home)">← Quit</button>
+  <span class="mu">${ex?`⏱ <span id="tm">${fmt(S.left)}</span> · `:''}${i+1} / ${qs.length}</span></div>
+  <div class="bar"><i style="width:${(i+(locked?1:0))/qs.length*100}%"></i></div>
+  <div class="tag">${LN[q.l]}</div><h2 style="margin-top:6px">${q.q}</h2>
+  ${q.o.map((t,k)=>{let c='opt';if(ex&&a[i]===k)c+=' sel';if(locked){if(k===q.a)c+=' ok';else if(k===a[i])c+=' no'}
+  return `<button class="${c}" onclick="pick(${k})" ${locked?'disabled':''}><b>${L[k]}.</b> ${t}</button>`}).join('')}
+  ${locked?`<div class="exp"><b>${a[i]===q.a?'✓ Correct.':'✗ Not quite.'}</b> ${q.e}</div>`:''}
+  <div class="row" style="margin-top:16px">
+  ${ex&&i>0?`<button class="btn" style="text-align:center" onclick="S.i--;quiz()">Previous</button>`:''}
+  ${ex?(last?`<button class="btn pri" onclick="submitExam()">Submit exam</button>`:`<button class="btn pri" onclick="S.i++;quiz()">Next</button>`)
+  :(locked?`<button class="btn pri" onclick="${last?'finish()':'S.i++;quiz()'}">${last?'See results':'Next'}</button>`:'')}</div>`;
+}
+function pick(k){if(S.mode!=='exam'&&S.a[S.i]!==null)return;S.a[S.i]=k;quiz()}
+function submitExam(){const u=S.a.filter(x=>x===null).length;if(!u||confirm(`${u} question(s) unanswered. Submit anyway?`))finish()}
+
+function finish(){
+  clearInterval(timer);
+  const items=S.qs.map((q,k)=>({...q,pick:S.a[k]}));
+  const right=items.filter(x=>x.pick===x.a).length,pct=Math.round(right/items.length*100);
+  ls.set('last',{mode:S.mode,date:new Date().toLocaleString(),items});
+  let m=new Set(ls.get('missed',[]));
+  items.forEach(x=>x.pick===x.a?m.delete(x.q):m.add(x.q));
+  ls.set('missed',[...m]);
+  app.innerHTML=`<div class="card" style="text-align:center"><div class="tag">${S.mode} results</div>
+  <div class="big ${pct>=75?'good':pct>=50?'':'bad'}">${pct}%</div><p>${right} of ${items.length} correct</p>
+  <p class="mu">${pct>=75?'Strong work.':pct>=50?'Getting there. Review the misses below.':'Keep going. Review the explanations and try again.'}</p></div>
+  <button class="btn pri" onclick="review('all')">Review answers</button>
+  <button class="btn" onclick="go(home)"><b>Back to menu</b></button>`;
+}
+
+function review(f){
+  const L0=ls.get('last');
+  if(!L0){app.innerHTML=`<button class="back" onclick="home()">← Back</button><div class="card">No attempts yet. Finish a Practice or Exam session and it will show up here.</div>`;return}
+  const items=L0.items.filter(x=>f==='all'||x.pick!==x.a),missed=ls.get('missed',[]).length;
+  app.innerHTML=`<button class="back" onclick="home()">← Back</button><h2>Review</h2>
+  <p class="mu">Last ${L0.mode}: ${L0.date}</p>
+  <div class="chips"><button class="chip ${f=='all'?'on':''}" onclick="review('all')">All (${L0.items.length})</button>
+  <button class="chip ${f!='all'?'on':''}" onclick="review('wrong')">Wrong / skipped (${L0.items.filter(x=>x.pick!==x.a).length})</button></div>
+  ${missed?`<button class="btn" onclick="drillMissed()"><b>Practice all missed questions (${missed})</b><span>Includes misses from earlier sessions</span></button>`:''}
+  ${items.map(x=>`<div class="card"><div class="tag">${LN[x.l]}</div><p><b>${x.q}</b></p>
+  ${x.o.map((t,k)=>`<div class="opt ${k===x.a?'ok':k===x.pick?'no':''}" style="margin:6px 0"><b>${L[k]}.</b> ${t}${k===x.a?' ✓':k===x.pick?' (your answer)':''}</div>`).join('')}
+  ${x.pick===null?'<p class="bad">Skipped</p>':''}<div class="exp">${x.e}</div></div>`).join('')||'<div class="card">Nothing to show here.</div>'}`;
+}
+function drillMissed(){
+  const m=ls.get('missed',[]),qs=prep(Q.filter(x=>m.includes(x.q)));
+  S={mode:'practice',qs,i:0,a:Array(qs.length).fill(null)};quiz();
+}
+
+function flash(){
+  S={deck:sh(pool()),i:0,flip:false};card();
+}
+function card(){
+  const {deck,i,flip}=S,q=deck[i];
+  app.innerHTML=`<div class="top"><button class="back" onclick="home()">← Back</button><span class="mu">${i+1} / ${deck.length}</span></div>
+  <div class="bar"><i style="width:${(i+1)/deck.length*100}%"></i></div>
+  <div class="card fc" onclick="S.flip=!S.flip;card()"><div class="tag">${flip?'Answer':LN[q.l]}</div>
+  ${flip?`<p><b>${q.o[q.a]}</b></p><p class="mu" style="font-size:.95rem">${q.e}</p>`:`<p>${q.q}</p><p class="mu" style="font-size:.85rem">Tap to flip</p>`}</div>
+  <div class="row"><button class="btn" style="text-align:center" ${i?'':'disabled'} onclick="S.i--;S.flip=false;card()">Previous</button>
+  <button class="btn pri" onclick="${i<deck.length-1?'S.i++;S.flip=false;card()':'S.deck=sh(S.deck);S.i=0;S.flip=false;card()'}">${i<deck.length-1?'Next':'Shuffle & restart'}</button></div>`;
+}
+home();
+</script>
+</body>
+</html>
